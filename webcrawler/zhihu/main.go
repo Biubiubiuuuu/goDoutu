@@ -9,6 +9,7 @@ import (
 	"net/http"
 	"time"
 
+	"github.com/Biubiubiuuuu/goDoutu/tools"
 	"github.com/beevik/etree"
 )
 
@@ -19,7 +20,7 @@ const (
 	Url      = "https://www.zhihu.com/api/v4/questions/%v/answers?include=data[*].is_normal,admin_closed_comment,reward_info,is_collapsed,annotation_action,annotation_detail,collapse_reason,is_sticky,collapsed_by,suggest_edit,comment_count,can_comment,content,editable_content,voteup_count,reshipment_settings,comment_permission,created_time,updated_time,review_info,relevant_info,question,excerpt,relationship.is_authorized,is_author,voting,is_thanked,is_nothelp,is_labeled,is_recognized,paid_info,paid_info_content;data[*].mark_infos[*].url;data[*].author.follower_count,badge[*].topics&offset=%d&limit=%d&sort_by=default&platform=desktop"
 	Female   = 1
 	Male     = 2
-	Limit    = 20
+	Limit    = 5
 	Question = "310564833"
 )
 
@@ -191,9 +192,13 @@ func main() {
 // 下载图片到七牛云
 func DownloadImgToNiuqiyun() {
 	for data := range ImageDataChannel {
-		for _, url := range data.Urls {
+		for k, url := range data.Urls {
 			if url != "" {
-				fmt.Println(url)
+				if k == 1 {
+					err, img := tools.Upload(url)
+					fmt.Println(err)
+					fmt.Println(img)
+				}
 			}
 		}
 	}
