@@ -9,12 +9,12 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/Biubiubiuuuu/goDoutu/tools"
+	"github.com/Biubiubiuuuu/goDoutu/goDoutu/webcrawler/zhihu/tools"
 	"github.com/beevik/etree"
 )
 
 // 获取图片Channel
-var ImageDataChannel = make(chan ImageData, 100)
+var ImageDataChannel = make(chan []string, 100)
 
 const (
 	Url      = "https://www.zhihu.com/api/v4/questions/%v/answers?include=data[*].is_normal,admin_closed_comment,reward_info,is_collapsed,annotation_action,annotation_detail,collapse_reason,is_sticky,collapsed_by,suggest_edit,comment_count,can_comment,content,editable_content,voteup_count,reshipment_settings,comment_permission,created_time,updated_time,review_info,relevant_info,question,excerpt,relationship.is_authorized,is_author,voting,is_thanked,is_nothelp,is_labeled,is_recognized,paid_info,paid_info_content;data[*].mark_infos[*].url;data[*].author.follower_count,badge[*].topics&offset=%d&limit=%d&sort_by=default&platform=desktop"
@@ -23,11 +23,6 @@ const (
 	Limit    = 5
 	Question = "310564833"
 )
-
-type ImageData struct {
-	Urls     []string `json:"urls"`      // 图片地址
-	AuthorID string   `json:"author_id"` // 作者ID
-}
 
 // 知乎问题回答返回结构体
 type ResponseData struct {
@@ -161,26 +156,29 @@ func main() {
 			if i < 1 {
 				url := fmt.Sprintf(Url, Question, i, Limit)
 				response := GetResponseData(url)
-				for _, v := range response.Data {
+				for _, dataV := range response.Data {
 					doc := etree.NewDocument()
-					if err := doc.ReadFromString(v.Content); err != nil {
+					if err := doc.ReadFromString(dataV.Content); err != nil {
 						panic(err)
-					}
-					imaData := ImageData{
-						AuthorID: v.Author.ID,
 					}
 					// 遍历是否存在重复答案
 					if len(arr) == 0 {
-						arr = append(arr, v.Author.ID)
+						arr = append(arr, dataV.Author.ID)
 					}
-					for _, v2 := range arr {
-						if v2 != imaData.AuthorID {
-							arr = append(arr, v.Author.ID)
-							for _, e := range doc.FindElements("./figure/noscript/img") {
-								imaData.Urls = append(imaData.Urls, e.SelectAttrValue("src", ""))
+					if !ExistStr(arr, dataV.Author.ID) || dataV.Author.ID == "0" {
+						arr = append(arr, dataV.Author.ID)
+						var urls []string
+						for _, e := range doc.FindElements("./figure/noscript/img") {
+							arrtValue := e.SelectAttrValue("src", "")
+							// 遍历是否存在重复图片
+							if len(urls) == 0 {
+								urls = append(urls, arrtValue)
 							}
-							ImageDataChannel <- imaData
+							if !ExistStr(urls, arrtValue) {
+								urls = append(urls, arrtValue)
+							}
 						}
+						ImageDataChannel <- urls
 					}
 				}
 			}
@@ -189,17 +187,31 @@ func main() {
 	time.Sleep(time.Second * 3)
 }
 
+// 检查数组中是否已存在
+func ExistStr(array []string, str string) bool {
+	exist := false
+	for _, v := range array {
+		if v == str {
+			exist = true
+		}
+	}
+	return exist
+}
+
 // 下载图片到七牛云
 func DownloadImgToNiuqiyun() {
-	for data := range ImageDataChannel {
-		for k, url := range data.Urls {
-			if url != "" {
-				if k == 1 {
-					err, img := tools.Upload(url)
-					fmt.Println(err)
-					fmt.Println(img)
+	aa := 1
+	for url := range ImageDataChannel {
+		for _, v := range url {
+			if v != "" {
+				if aa == 1 {
+					filePath := tools.Download(v)
+					if filePath != "" {
+						tools.Upload(filePath)
+					}
 				}
 			}
+			aa++
 		}
 	}
 	defer close(ImageDataChannel)

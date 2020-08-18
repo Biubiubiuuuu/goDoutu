@@ -1,3 +1,9 @@
-github.com/Biubiubiuuuu/goDoutu v0.0.0-20200813163458-63d376c12483 h1:hkG6pY1+Y//4V6MllFHEKnBBsu1j6TpS4g1DmsZtGVk=
+github.com/Biubiubiuuuu/goDoutu v0.0.0-20200814144942-79abc81b37de h1:qzMAb2VpYaaI81FGn4KlKZPHuXGDXFadddsEy40y/8w=
+github.com/Biubiubiuuuu/goDoutu/webcrawler/zhihu v0.0.0-20200814144942-79abc81b37de h1:xKIG3e0/K80x1vZbgrwyHNlHyvw+y1H3R8NjdceU2EE=
 github.com/beevik/etree v1.1.0 h1:T0xke/WvNtMoCqgzPhkX2r4rjY3GDZFi+FjpRZY2Jbs=
 github.com/beevik/etree v1.1.0/go.mod h1:r8Aw8JqVegEf0w2fDnATrX9VpkMcyFeM0FhwO62wh+A=
+github.com/google/uuid v1.1.1 h1:Gkbcsh/GbpXz7lPftLA3P6TYMwjCLYm83jiFQZF/3gY=
+github.com/google/uuid v1.1.1/go.mod h1:TIyPZe4MgqvfeYDBFedMoGGpEw/LqOeaOT+nhxU+yHo=
+github.com/qiniu/api.v7 v7.2.5+incompatible h1:6KKaGt7MbFzVGSniwzv7qsM/Qv0or4SkRJfmak8LqZE=
+github.com/qiniu/api.v7/v7 v7.5.0 h1:DY6NrIp6FZ1GP4Roc9hRnO2m+OLzASYNnvz5Mbgw1rk=
+github.com/qiniu/api.v7/v7 v7.5.0/go.mod h1:VE5oC5rkE1xul0u1S2N0b2Uxq9/6hZzhyqjgK25XDcM=

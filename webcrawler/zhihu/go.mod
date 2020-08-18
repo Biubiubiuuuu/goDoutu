@@ -1,4 +1,4 @@
-module github.com/Biubiubiuuuu/goDoutu/webcrawler/zhihu
+module github.com/Biubiubiuuuu/goDoutu/goDoutu/webcrawler/zhihu
 
 go 1.14
 
@@ -24,4 +24,8 @@ replace (
 	google.golang.org/grpc => github.com/grpc/grpc-go v1.24.0
 )
 
-require github.com/beevik/etree v1.1.0
+require (
+	github.com/beevik/etree v1.1.0
+	github.com/google/uuid v1.1.1
+	github.com/qiniu/api.v7/v7 v7.5.0
+)
