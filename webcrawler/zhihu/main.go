@@ -11,9 +11,11 @@ import (
 	"math"
 	"net/http"
 	"os"
+	"path/filepath"
 	"strings"
 	"time"
 
+	"github.com/Biubiubiuuuu/goDoutu/models"
 	"github.com/beevik/etree"
 	"github.com/google/uuid"
 	"github.com/qiniu/api.v7/v7/auth/qbox"
@@ -181,72 +183,57 @@ func main() {
 	}
 	//总回答数
 	count := data.Paging.Totals
+	fmt.Println(count)
 	//总页大小 向上取整
 	pages := int(math.Ceil(float64(count) / float64(Limit)))
 	var arr []string
-	go func() {
-		for i := 0; i < pages; i++ {
-			if i < 1 {
-				url := fmt.Sprintf(Url, Question, i, Limit)
-				response := GetResponseData(url)
-				for _, dataV := range response.Data {
-					doc := etree.NewDocument()
-					if err := doc.ReadFromString(dataV.Content); err != nil {
-						panic(err)
+	fmt.Println(pages)
+	for i := 0; i < pages; i++ {
+		url := fmt.Sprintf(Url, Question, i, Limit)
+		response := GetResponseData(url)
+		for _, dataV := range response.Data {
+			doc := etree.NewDocument()
+			if err := doc.ReadFromString(dataV.Content); err != nil {
+				panic(err)
+			}
+			// 遍历是否存在重复答案
+			if len(arr) == 0 {
+				arr = append(arr, dataV.Author.ID)
+			}
+			if !ExistStr(arr, dataV.Author.ID) || dataV.Author.ID == "0" {
+				arr = append(arr, dataV.Author.ID)
+				var urls []string
+				for _, e := range doc.FindElements("./figure/noscript/img") {
+					arrtValue := e.SelectAttrValue("src", "")
+					// 遍历是否存在重复图片
+					if len(urls) == 0 {
+						urls = append(urls, arrtValue)
 					}
-					// 遍历是否存在重复答案
-					if len(arr) == 0 {
-						arr = append(arr, dataV.Author.ID)
-					}
-					if !ExistStr(arr, dataV.Author.ID) || dataV.Author.ID == "0" {
-						arr = append(arr, dataV.Author.ID)
-						var urls []string
-						for _, e := range doc.FindElements("./figure/noscript/img") {
-							arrtValue := e.SelectAttrValue("src", "")
-							// 遍历是否存在重复图片
-							if len(urls) == 0 {
-								urls = append(urls, arrtValue)
-							}
-							if !ExistStr(urls, arrtValue) {
-								urls = append(urls, arrtValue)
-							}
-						}
-						ImageDataChannel <- urls
+					if !ExistStr(urls, arrtValue) {
+						urls = append(urls, arrtValue)
 					}
 				}
+				ImageDataChannel <- urls
 			}
 		}
-	}()
-	time.Sleep(time.Second * 3)
-}
-
-// 检查数组中是否已存在
-func ExistStr(array []string, str string) bool {
-	exist := false
-	for _, v := range array {
-		if v == str {
-			exist = true
-		}
 	}
-	return exist
 }
 
 // 下载图片到七牛云
 func DownloadImgToNiuqiyun() {
-	aa := 1
 	for url := range ImageDataChannel {
 		for _, v := range url {
 			if v != "" {
-				if aa == 1 {
-					filePath := Download(v)
-					if filePath != "" {
-						_, nqyUrl := Upload(filePath)
-						word := BaiDuALPictureIdentify(nqyUrl)
-						fmt.Println(word)
+				filePath := Download(v)
+				if filePath != "" {
+					_, nqyUrl := Upload(filePath)
+					emoticons := models.Emoticons{
+						WordDescription: BaiDuALPictureIdentify(nqyUrl),
+						Url:             nqyUrl,
 					}
+					emoticons.AddEmoticons()
 				}
 			}
-			aa++
 		}
 	}
 	defer close(ImageDataChannel)
@@ -281,7 +268,7 @@ func Upload(imgUrl string) (err error, url string) {
 	ret := storage.PutRet{}
 	upToken := Token()
 	uuidKey := uuid.New()
-	str := strings.Split(".", imgUrl)
+	str := strings.Split(imgUrl, ".")
 	key := uuidKey.String() + "." + str[len(str)-1]
 	if err := formUploader.PutFile(context.Background(), &ret, upToken, key, imgUrl, nil); err != nil {
 		return err, ""
@@ -313,14 +300,24 @@ func BaiDuALPictureIdentify(imageUrl string) string {
 		panic(err)
 	}
 	if len(res.WordsResult) > 0 {
-
 		var str []string
 		for _, v := range res.WordsResult {
 			str = append(str, v.Words)
 		}
 		return strings.Join(str, ",")
 	}
-	panic(res.ErrorMsg)
+	return ""
+}
+
+// 指定的字符串是否存在数组中
+func ExistStr(array []string, str string) bool {
+	exist := false
+	for _, v := range array {
+		if v == str {
+			exist = true
+		}
+	}
+	return exist
 }
 
 // 下载图片到本地
@@ -345,6 +342,9 @@ func Download(url string) string {
 	}
 	writer := bufio.NewWriter(file)
 	io.Copy(writer, reader)
+	if GetFileSize(path) == 0 {
+		return ""
+	}
 	return path
 }
 
@@ -362,6 +362,16 @@ func CreateDir(path string) error {
 func IsExist(f string) bool {
 	_, err := os.Stat(f)
 	return err == nil || os.IsExist(err)
+}
+
+// 判断文件大小
+func GetFileSize(filename string) int64 {
+	var result int64
+	filepath.Walk(filename, func(path string, f os.FileInfo, err error) error {
+		result = f.Size()
+		return nil
+	})
+	return result
 }
 
 // 发送GET请求
