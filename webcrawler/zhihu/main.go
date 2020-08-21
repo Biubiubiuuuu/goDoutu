@@ -1,7 +1,6 @@
 package main
 
 import (
-	"bufio"
 	"bytes"
 	"context"
 	"encoding/json"
@@ -33,7 +32,8 @@ const (
 	MacPath      = "/Users/gaochao/LTWorks/goDoutu/webcrawler/zhihu/basic/image/"                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                     // 本机下载地址
 	Url          = "https://www.zhihu.com/api/v4/questions/%v/answers?include=data[*].is_normal,admin_closed_comment,reward_info,is_collapsed,annotation_action,annotation_detail,collapse_reason,is_sticky,collapsed_by,suggest_edit,comment_count,can_comment,content,editable_content,voteup_count,reshipment_settings,comment_permission,created_time,updated_time,review_info,relevant_info,question,excerpt,relationship.is_authorized,is_author,voting,is_thanked,is_nothelp,is_labeled,is_recognized,paid_info,paid_info_content;data[*].mark_infos[*].url;data[*].author.follower_count,badge[*].topics&offset=%d&limit=%d&sort_by=default&platform=desktop" // 知乎问题api地址
 	Limit        = 5                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                  // 知乎问题返回问题数 最大20条
-	Question     = "310564833"                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                        // 知乎问题ID
+	Question     = "317520471"                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                        // 知乎问题ID
+	Question2    = "302378021"                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                        // 知乎问题ID
 	ClientID     = "iHCdpZwXdG7TXb5jld7MzvTa"                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                         // 百度API client_id
 	ClientSecret = "xK6R7zHLLhaTonRzNTTBkwhoLFjVkETr"                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                 // 百度api client_secret
 )
@@ -176,6 +176,15 @@ func main() {
 	go DownloadImgToNiuqiyun()
 	// 问题ID 跳转页 页大小
 	url := fmt.Sprintf(Url, Question, 0, Limit)
+	GetZhiHuQuestion(url)
+
+	// 问题ID 跳转页 页大小
+	url2 := fmt.Sprintf(Url, Question2, 0, Limit)
+	GetZhiHuQuestion(url2)
+}
+
+// 获取请求，开启多个问题抓取
+func GetZhiHuQuestion(url string) {
 	response := HttpGet(url)
 	var data ResponseData
 	if err := json.Unmarshal([]byte(response), &data); err != nil {
@@ -225,10 +234,11 @@ func DownloadImgToNiuqiyun() {
 		for _, v := range url {
 			if v != "" {
 				filePath := Download(v)
+				wordDescription := BaiDuALPictureIdentify(v)
 				if filePath != "" {
 					_, nqyUrl := Upload(filePath)
 					emoticons := models.Emoticons{
-						WordDescription: BaiDuALPictureIdentify(nqyUrl),
+						WordDescription: wordDescription,
 						Url:             nqyUrl,
 					}
 					emoticons.AddEmoticons()
@@ -322,26 +332,26 @@ func ExistStr(array []string, str string) bool {
 
 // 下载图片到本地
 func Download(url string) string {
-	str := strings.Split(url, ".")
-	fileName := uuid.New().String() + "." + strings.Replace(str[len(str)-1], "?source=1940ef5c", "", -1)
 	res, err := http.Get(url)
 	if err != nil {
 		return ""
 	}
 	defer res.Body.Close()
-	reader := bufio.NewReaderSize(res.Body, 32*1024)
+	body, _ := ioutil.ReadAll(res.Body)
+	str := strings.Split(url, ".")
+	fileName := uuid.New().String() + "." + strings.Replace(str[len(str)-1], "?source=1940ef5c", "", -1)
 	time := time.Now().Format("20060102")
 	path := MacPath + time
 	if !IsExist(path) {
 		CreateDir(path)
 	}
 	path = path + "/" + fileName
-	file, err := os.Create(path)
+	out, err := os.Create(path)
 	if err != nil {
 		return ""
 	}
-	writer := bufio.NewWriter(file)
-	io.Copy(writer, reader)
+	io.Copy(out, bytes.NewReader(body))
+	fmt.Println(path)
 	if GetFileSize(path) == 0 {
 		return ""
 	}
