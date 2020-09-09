@@ -6,7 +6,7 @@ import (
 	"strconv"
 	"sync"
 
-	"github.com/Biubiubiuuuu/goDoutu/helper/configHelper"
+	"github.com/Biubiubiuuuu/goDoutu/helper/config"
 	"github.com/jinzhu/gorm"
 	_ "github.com/jinzhu/gorm/dialects/mysql"
 )
@@ -32,12 +32,12 @@ func InitMysqlConnPool() *gorm.DB {
 	var (
 		dbType, dbName, user, password, host, tablePrefix string
 	)
-	dbType = configHelper.DBMysqlType
-	dbName = configHelper.DBMysqlName
-	user = configHelper.DBMysqlUser
-	password = configHelper.DBMysqlPassword
-	host = configHelper.DBMysqlHost
-	tablePrefix = configHelper.DBMysqlTablePrefix
+	dbType = config.DBMysqlType
+	dbName = config.DBMysqlName
+	user = config.DBMysqlUser
+	password = config.DBMysqlPassword
+	host = config.DBMysqlHost
+	tablePrefix = config.DBMysqlTablePrefix
 	// 数据库连接字符串
 	connect := fmt.Sprintf("%v:%v@tcp(%v)/%v?charset=utf8&parseTime=True&loc=Local", user, password, host, dbName)
 	fmt.Println(connect)
@@ -48,7 +48,7 @@ func InitMysqlConnPool() *gorm.DB {
 	// 全局设置表名不可以为复数形式
 	db.SingularTable(true)
 	// debug模式下，打印sql日志到控制台，方便查询问题
-	if configHelper.RunMode == "debug" {
+	if config.RunMode == "debug" {
 		db.LogMode(true)
 	}
 	// 表明前缀
@@ -61,8 +61,8 @@ func InitMysqlConnPool() *gorm.DB {
 
 // 设置其他信息
 func SetDBConns(db *gorm.DB) {
-	MaxOpenConns, _ := strconv.Atoi(configHelper.MaxOpenConns)
-	MaxIdleConns, _ := strconv.Atoi(configHelper.MaxIdleConns)
+	MaxOpenConns, _ := strconv.Atoi(config.MaxOpenConns)
+	MaxIdleConns, _ := strconv.Atoi(config.MaxIdleConns)
 	// 设置最大开放连接数
 	db.DB().SetMaxOpenConns(MaxOpenConns)
 	// 设置最大空闲连接数

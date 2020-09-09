@@ -1,13 +1,13 @@
-package jwtHelper
+package jwt
 
 import (
 	"time"
 
-	"github.com/Biubiubiuuuu/goDoutu/helper/configHelper"
+	"github.com/Biubiubiuuuu/goDoutu/helper/config"
 	"github.com/dgrijalva/jwt-go"
 )
 
-var jwtSecret = []byte(configHelper.JwtSecret)
+var jwtSecret = []byte(config.JwtSecret)
 
 type Claims struct {
 	UserName string
@@ -27,7 +27,7 @@ func GenerateToken(username, password string) (string, error) {
 		password,
 		jwt.StandardClaims{
 			ExpiresAt: expireTime.Unix(),
-			Issuer:    configHelper.JwtName,
+			Issuer:    config.JwtName,
 		},
 	}
 	tokenClaims := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)

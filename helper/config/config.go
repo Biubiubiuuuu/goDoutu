@@ -1,4 +1,4 @@
-package configHelper
+package config
 
 import (
 	"log"
@@ -30,6 +30,8 @@ var (
 	DBRedisMaxActive   string
 	DBRedisMaxIdle     string
 	DBRedisIdleTimeout string
+	AppID              string
+	AppSecret          string
 )
 
 // 初始化配置信息
@@ -70,6 +72,8 @@ func LoadApp() {
 	Static = sec.Key("STATIC").MustString("static/")
 	LogDir = sec.Key("LOGDIR").MustString("static/log/")
 	ImageDir = sec.Key("IMAGEDIR").MustString("static/image/")
+	AppID = sec.Key("APPID").MustString("")
+	AppSecret = sec.Key("APPSECRET").MustString("")
 }
 
 func LoadMysql() {

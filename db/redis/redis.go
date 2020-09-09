@@ -6,7 +6,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/Biubiubiuuuu/goDoutu/helper/configHelper"
+	"github.com/Biubiubiuuuu/goDoutu/helper/config"
 	"github.com/gomodule/redigo/redis"
 )
 
@@ -28,12 +28,12 @@ func (db *RedisDataBase) InitConn() {
 
 // 初始化redis连接池
 func InitRedisConnPool() redis.Conn {
-	host := configHelper.DBRedisHost
-	db, _ := strconv.Atoi(configHelper.DBRedisDb)
-	pass := configHelper.DBRedisPassword
-	maxActive, _ := strconv.Atoi(configHelper.DBRedisMaxActive)
-	maxIdle, _ := strconv.Atoi(configHelper.DBRedisMaxIdle)
-	idleTimeout, _ := strconv.ParseInt(configHelper.DBRedisIdleTimeout, 10, 64)
+	host := config.DBRedisHost
+	db, _ := strconv.Atoi(config.DBRedisDb)
+	pass := config.DBRedisPassword
+	maxActive, _ := strconv.Atoi(config.DBRedisMaxActive)
+	maxIdle, _ := strconv.Atoi(config.DBRedisMaxIdle)
+	idleTimeout, _ := strconv.ParseInt(config.DBRedisIdleTimeout, 10, 64)
 	pool := redis.Pool{
 		MaxIdle:     maxIdle,
 		MaxActive:   maxActive,
