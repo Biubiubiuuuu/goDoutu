@@ -24,18 +24,18 @@ type User struct {
 	Token     string    `gorm:"size:255" json:"token"`            // token
 }
 
-// 粉丝
+// 关注 or 被关注
 type UserFans struct {
 	ID       int64 `gorm:"index"`
-	BeUserID int64 // 被关注用户ID
 	UserID   int64 // 关注用户ID
+	BeUserID int64 // 被关注用户ID
 }
 
-// 我的关注
-type UserFollows struct {
-	ID       int64 `gorm:"index"`
-	BeUserID int64 // 被关注用户ID
-	UserID   int64 // 关注用户ID
+// 我的收藏
+type UserEmoticons struct {
+	ID          int64 `gorm:"index"`
+	UserID      int64 // 用户ID
+	EmoticonsID int64 // 表情包ID
 }
 
 //var buf strings.Builder
@@ -75,22 +75,66 @@ func (u *User) QueryUserByID() error {
 	return db.First(&u, u.ID).Error
 }
 
-// 我的粉丝
-func (u *UserFans) QueryMyFansByBeUserID() (fans []UserFans) {
+// 添加关注
+func (u *UserFans) AddFans() error {
 	db := mysql.GetMysqlDB()
-	db.Where("be_user_id = ?", u.BeUserID).Find(&fans)
+	return db.Create(&u).Error
+}
+
+// 取消关注
+func (u *UserFans) CancelFans() error {
+	db := mysql.GetMysqlDB()
+	return db.Unscoped().Delete(&u).Error
+}
+
+// 我的粉丝
+func (u *User) QueryMyFansByBeUserID() (count int, user []User) {
+	db := mysql.GetMysqlDB()
+	query := db.Table("user")
+	query = query.Select("id in (SELECT user_id FROM user_fans WHERE be_user_id = ?)", u.ID)
+	query.Count(&count)
+	query.Find(&user)
 	return
 }
 
-// 我的关注
-func (u *UserFollows) QueryMyFollowsByBeUserID() (follows []UserFollows) {
+// 查看是否关注用户
+func (u *User) QueryFansIsBe(be_user_id int64) bool {
 	db := mysql.GetMysqlDB()
-	db.Where("be_user_id = ?", u.BeUserID).Find(&follows)
-	return
+	query := db.Table("user_fans")
+	var fans []UserFans
+	query = query.Select("be_user_id = ? AND user_id = ?", be_user_id, u.ID).Find(&fans)
+	if len(fans) > 0 {
+		return true
+	}
+	return false
+}
+
+// 查看是否互相关注
+func (u *User) QueryFansMutualed(be_user_id int64) bool {
+	db := mysql.GetMysqlDB()
+	query := db.Table("user_fans")
+	var fans []UserFans
+	query = query.Select("be_user_id = ? AND user_id = ? AND be_user_id = ? AND user_id = ?", be_user_id, u.ID, u.ID, be_user_id).Find(&fans)
+	if len(fans) > 0 {
+		return true
+	}
+	return false
 }
 
 // 新增用户
 func (u *User) NewUser() error {
 	db := mysql.GetMysqlDB()
 	return db.Create(&u).Error
+}
+
+// 收藏表情包
+func (u *UserEmoticons) AddUserEmoticons() error {
+	db := mysql.GetMysqlDB()
+	return db.Create(&u).Error
+}
+
+// 是否已收藏
+func (u *UserEmoticons) BoolUserEmoticons() error {
+	db := mysql.GetMysqlDB()
+	return db.Where("user_id = ? AND emoticons_id = ?", u.UserID, u.EmoticonsID).First(&u).Error
 }

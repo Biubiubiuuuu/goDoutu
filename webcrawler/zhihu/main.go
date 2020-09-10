@@ -1,5 +1,8 @@
 package main
 
+/**
+  知乎问题图片爬虫，仅针对表情包回答，需提供问题ID，例如：317520471
+*/
 import (
 	"bytes"
 	"context"
@@ -7,6 +10,7 @@ import (
 	"fmt"
 	"io"
 	"io/ioutil"
+	"log"
 	"math"
 	"net/http"
 	"os"
@@ -188,7 +192,7 @@ func GetZhiHuQuestion(url string) {
 	response := HttpGet(url)
 	var data ResponseData
 	if err := json.Unmarshal([]byte(response), &data); err != nil {
-		panic(err)
+		log.Println("Zhihu pachong fail:" + err.Error())
 	}
 	//总回答数
 	count := data.Paging.Totals
@@ -203,7 +207,7 @@ func GetZhiHuQuestion(url string) {
 		for _, dataV := range response.Data {
 			doc := etree.NewDocument()
 			if err := doc.ReadFromString(dataV.Content); err != nil {
-				panic(err)
+				log.Println("Zhihu pachong fail:" + err.Error())
 			}
 			// 遍历是否存在重复答案
 			if len(arr) == 0 {
@@ -253,7 +257,7 @@ func DownloadImgToNiuqiyun() {
 func GetResponseData(url string) (data ResponseData) {
 	response := HttpGet(url)
 	if err := json.Unmarshal([]byte(response), &data); err != nil {
-		panic(err)
+		log.Println("get fail:" + err.Error())
 	}
 	return
 }
@@ -291,12 +295,14 @@ func BaiDuALToken() string {
 	tokenResStr := HttpGet(fmt.Sprintf("https://aip.baidubce.com/oauth/2.0/token?grant_type=client_credentials&client_id=%v&client_secret=%v", ClientID, ClientSecret))
 	var res BaiDuALTokenResponse
 	if err := json.Unmarshal([]byte(tokenResStr), &res); err != nil {
-		panic(err)
+		log.Println("Baidu AL auth fail:" + err.Error())
+		return ""
 	}
 	if res.AccessToken != "" {
 		return res.AccessToken
 	}
-	panic(res.ErrorDescription)
+	log.Println("Baidu AL auth fail:" + res.ErrorDescription)
+	return ""
 }
 
 // 百度API文字识别
@@ -307,7 +313,8 @@ func BaiDuALPictureIdentify(imageUrl string) string {
 	resJson := HttpPost(reqUrl, postData)
 	var res BaiDuALPictureIdentifyResponse
 	if err := json.Unmarshal([]byte(resJson), &res); err != nil {
-		panic(err)
+		log.Println("Baidu AL fail:" + err.Error())
+		return ""
 	}
 	if len(res.WordsResult) > 0 {
 		var str []string
@@ -392,7 +399,7 @@ func HttpGet(url string) string {
 	client := &http.Client{Timeout: 5 * time.Second}
 	resp, err := client.Get(url)
 	if err != nil {
-		panic(err)
+		log.Println("get fail:" + err.Error())
 	}
 	defer resp.Body.Close()
 	var buffer [512]byte
@@ -403,7 +410,7 @@ func HttpGet(url string) string {
 		if err != nil && err == io.EOF {
 			break
 		} else if err != nil {
-			panic(err)
+			log.Println("get fail:" + err.Error())
 		}
 	}
 	return result.String()
@@ -415,13 +422,13 @@ func HttpGet(url string) string {
 func HttpPost(url string, postData string) string {
 	resp, err := http.Post(url, "application/x-www-form-urlencoded", strings.NewReader(postData))
 	if err != nil {
-		panic(err)
+		log.Println("post fail:" + err.Error())
 	}
 
 	defer resp.Body.Close()
 	body, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
-		panic(err)
+		log.Println("post fail:" + err.Error())
 	}
 	return string(body)
 }

@@ -32,6 +32,13 @@ var (
 	DBRedisIdleTimeout string
 	AppID              string
 	AppSecret          string
+	QNYAccessKey       string
+	QNYSecretKey       string
+	QNYBucketname      string
+	QNYBasicUrl        string
+	BAIDUClientID      string
+	BAIDUClientSecret  string
+	BAIDUUrl           string
 )
 
 // 初始化配置信息
@@ -74,6 +81,13 @@ func LoadApp() {
 	ImageDir = sec.Key("IMAGEDIR").MustString("static/image/")
 	AppID = sec.Key("APPID").MustString("")
 	AppSecret = sec.Key("APPSECRET").MustString("")
+	QNYAccessKey = sec.Key("QNYAccessKey").MustString("")
+	QNYSecretKey = sec.Key("QNYSecretKey").MustString("")
+	QNYBucketname = sec.Key("QNYBucketname").MustString("")
+	QNYBasicUrl = sec.Key("QNYBASICURL").MustString("")
+	BAIDUClientID = sec.Key("BAIDUClIENTID").MustString("")
+	BAIDUClientSecret = sec.Key("BAIDUClientSecret").MustString("")
+	BAIDUUrl = sec.Key("BAIDUURL").MustString("")
 }
 
 func LoadMysql() {

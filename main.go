@@ -16,7 +16,6 @@ func main() {
 		&models.EmoticonsType{},
 		&models.EmoticonsGrouping{},
 		&models.UserFans{},
-		&models.UserFollows{},
 	)
 	router := router.Init()
 	router.Run(config.HTTPPort)

@@ -37,4 +37,8 @@ func InitUser(router *gin.Engine) {
 	api.POST("auth", controller.WechatAuth)
 	// 新增或更新用户信息
 	api.POST("user", controller.NewUser)
+	api.GET("emotions", controller.Emoticons)
+	api.POST("emotions", controller.NewEmoticons)
+	api.POST("upload", controller.UploadImage)
+	api.DELETE("upload", controller.DelImage)
 }
